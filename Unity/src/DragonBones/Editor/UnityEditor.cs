@@ -148,6 +148,19 @@ namespace DragonBones
             for (int i = 0; i < textureAtlasJSONs.Count; ++i)
             {
                 string path = textureAtlasJSONs[i];
+
+                // Convert absolute path to relative path (Assets/...)
+                if (!path.StartsWith("Assets"))
+                {
+                    int assetsIndex = path.IndexOf("Assets");
+                    if (assetsIndex >= 0)
+                    {
+                        path = path.Substring(assetsIndex);
+                    }
+                }
+                // Normalize path separators
+                path = path.Replace("\\", "/");
+
                 //load textureAtlas data
                 UnityDragonBonesData.TextureAtlas ta = new UnityDragonBonesData.TextureAtlas();
                 ta.textureAtlasJSON = AssetDatabase.LoadAssetAtPath<TextAsset>(path);
@@ -245,18 +258,6 @@ namespace DragonBones
 
             _armatureComponent.sortingLayerName = _armatureComponent.sortingLayerName;
             _armatureComponent.sortingOrder = _armatureComponent.sortingOrder;
-        }
-
-        public static void ReplaceAnimation(UnityArmatureComponent _armatureComponent, string armatureName)
-        {
-            _armatureComponent.armatureBaseName = armatureName;
-
-            if (!string.IsNullOrEmpty(armatureName))
-            {
-                string dragonBonesName = _armatureComponent.unityData.dataName;
-                ArmatureData baseDiceArmature = UnityFactory.factory.GetArmatureData(armatureName, dragonBonesName);
-                UnityFactory.factory.ReplaceAnimation(_armatureComponent.armature, baseDiceArmature);
-            }
         }
 
         public static UnityEngine.Transform GetSelectionParentTransform()

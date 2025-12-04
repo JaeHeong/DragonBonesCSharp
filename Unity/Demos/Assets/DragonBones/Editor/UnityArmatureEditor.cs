@@ -393,7 +393,7 @@ namespace DragonBones
             if (!EditorApplication.isPlayingOrWillChangePlaymode && Selection.activeObject == _armatureComponent.gameObject)
             {
                 EditorUtility.SetDirty(_armatureComponent);
-                HandleUtility.Repaint();
+                SceneView.RepaintAll();
             }
         }
 
@@ -456,8 +456,9 @@ namespace DragonBones
 
         private bool _IsPrefab()
         {
-            return PrefabUtility.GetPrefabParent(_armatureComponent.gameObject) == null
-                && PrefabUtility.GetPrefabObject(_armatureComponent.gameObject) != null;
+            var prefabType = PrefabUtility.GetPrefabAssetType(_armatureComponent.gameObject);
+            var prefabStatus = PrefabUtility.GetPrefabInstanceStatus(_armatureComponent.gameObject);
+            return prefabType != PrefabAssetType.NotAPrefab && prefabStatus == PrefabInstanceStatus.NotAPrefab;
         }
 
         private List<string> _GetSortingLayerNames()

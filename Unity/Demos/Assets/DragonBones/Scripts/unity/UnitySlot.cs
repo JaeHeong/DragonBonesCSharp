@@ -426,10 +426,28 @@ namespace DragonBones
         {
             if (this._childArmature == null)
             {
+                if (this._meshBuffer == null || this._proxy == null)
+                {
+                    return;
+                }
+
                 var proxyTrans = _proxy._colorTransform;
                 if (this._isCombineMesh)
                 {
+                    if (this._combineMesh == null ||
+                        this._combineMesh.meshBuffers == null ||
+                        this._meshBuffer.vertexBuffers == null ||
+                        this._meshBuffer.color32Buffers == null)
+                    {
+                        return;
+                    }
+
                     var meshBuffer = this._combineMesh.meshBuffers[this._sumMeshIndex];
+                    if (meshBuffer == null || meshBuffer.color32Buffers == null)
+                    {
+                        return;
+                    }
+
                     for (var i = 0; i < this._meshBuffer.vertexBuffers.Length; i++)
                     {
                         var index = this._verticeOffset + i;
@@ -438,15 +456,19 @@ namespace DragonBones
                         this._meshBuffer.color32Buffers[i].b = (byte)(_colorTransform.blueMultiplier * proxyTrans.blueMultiplier * 255);
                         this._meshBuffer.color32Buffers[i].a = (byte)(_colorTransform.alphaMultiplier * proxyTrans.alphaMultiplier * 255);
                         //
-                        meshBuffer.color32Buffers[index] = this._meshBuffer.color32Buffers[i];
+                        if (index < meshBuffer.color32Buffers.Length)
+                        {
+                            meshBuffer.color32Buffers[index] = this._meshBuffer.color32Buffers[i];
+                        }
                     }
 
                     meshBuffer.UpdateColors();
                 }
-                else if (this._meshBuffer.sharedMesh != null)
+                else if (this._meshBuffer.sharedMesh != null && this._meshBuffer.color32Buffers != null)
                 {
                     for (int i = 0, l = this._meshBuffer.sharedMesh.vertexCount; i < l; ++i)
                     {
+                        if (i >= this._meshBuffer.color32Buffers.Length) break;
                         this._meshBuffer.color32Buffers[i].r = (byte)(_colorTransform.redMultiplier * proxyTrans.redMultiplier * 255);
                         this._meshBuffer.color32Buffers[i].g = (byte)(_colorTransform.greenMultiplier * proxyTrans.greenMultiplier * 255);
                         this._meshBuffer.color32Buffers[i].b = (byte)(_colorTransform.blueMultiplier * proxyTrans.blueMultiplier * 255);
@@ -676,7 +698,11 @@ namespace DragonBones
 
         protected override void _UpdateMesh()
         {
-            if (this._meshBuffer.sharedMesh == null || this._deformVertices == null)
+            if (this._meshBuffer == null ||
+                this._meshBuffer.sharedMesh == null ||
+                this._meshBuffer.vertexBuffers == null ||
+                this._meshBuffer.rawVertextBuffers == null ||
+                this._deformVertices == null)
             {
                 return;
             }
@@ -815,7 +841,12 @@ namespace DragonBones
 
         protected override void _UpdateTransform()
         {
-            if (this._isCombineMesh)
+            if (this._isCombineMesh &&
+                this._meshBuffer != null &&
+                this._meshBuffer.vertexBuffers != null &&
+                this._meshBuffer.rawVertextBuffers != null &&
+                this._combineMesh != null &&
+                this._combineMesh.meshBuffers != null)
             {
                 var a = globalTransformMatrix.a;
                 var b = globalTransformMatrix.b;
@@ -830,24 +861,30 @@ namespace DragonBones
                 var vx = 0.0f;
                 var vy = 0.0f;
                 var meshBuffer = this._combineMesh.meshBuffers[this._sumMeshIndex];
-                for (int i = 0, l = this._meshBuffer.vertexBuffers.Length; i < l; i++)
+                if (meshBuffer != null && meshBuffer.vertexBuffers != null)
                 {
-                    index = i + this._verticeOffset;
-                    //vertices
-                    rx = this._meshBuffer.rawVertextBuffers[i].x;
-                    ry = -this._meshBuffer.rawVertextBuffers[i].y;
+                    for (int i = 0, l = this._meshBuffer.vertexBuffers.Length; i < l; i++)
+                    {
+                        index = i + this._verticeOffset;
+                        //vertices
+                        rx = this._meshBuffer.rawVertextBuffers[i].x;
+                        ry = -this._meshBuffer.rawVertextBuffers[i].y;
 
-                    vx = rx * a + ry * c + tx;
-                    vy = rx * b + ry * d + ty;
+                        vx = rx * a + ry * c + tx;
+                        vy = rx * b + ry * d + ty;
 
-                    this._meshBuffer.vertexBuffers[i].x = vx;
-                    this._meshBuffer.vertexBuffers[i].y = vy;
+                        this._meshBuffer.vertexBuffers[i].x = vx;
+                        this._meshBuffer.vertexBuffers[i].y = vy;
 
-                    meshBuffer.vertexBuffers[index].x = vx;
-                    meshBuffer.vertexBuffers[index].y = vy;
+                        if (index < meshBuffer.vertexBuffers.Length)
+                        {
+                            meshBuffer.vertexBuffers[index].x = vx;
+                            meshBuffer.vertexBuffers[index].y = vy;
+                        }
+                    }
+                    //
+                    meshBuffer.vertexDirty = true;
                 }
-                //
-                meshBuffer.vertexDirty = true;
             }
             else
             {
@@ -910,7 +947,11 @@ namespace DragonBones
                 transform.localEulerAngles = _helpVector3;
 
                 //Modify mesh skew. // TODO child armature skew.
-                if ((this._display == this._rawDisplay || this._display == this._meshDisplay) && this._meshBuffer.sharedMesh != null)
+                if ((this._display == this._rawDisplay || this._display == this._meshDisplay) &&
+                    this._meshBuffer != null &&
+                    this._meshBuffer.sharedMesh != null &&
+                    this._meshBuffer.vertexBuffers != null &&
+                    this._meshBuffer.rawVertextBuffers != null)
                 {
                     var skew = global.skew;
                     var dSkew = skew;

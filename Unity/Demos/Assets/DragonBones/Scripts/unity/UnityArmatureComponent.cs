@@ -136,15 +136,7 @@ namespace DragonBones
                 this._armature = null;
                 if (this._disposeProxy)
                 {
-                    try
-                    {
-                        var go = gameObject;
-                        UnityFactoryHelper.DestroyUnityObject(gameObject);
-                    }
-                    catch (System.Exception e)
-                    {
-
-                    }
+                    UnityFactoryHelper.DestroyUnityObject(gameObject);
                 }
             }
 
@@ -275,11 +267,11 @@ namespace DragonBones
                         case BoundingBoxType.Rectangle:
                             {
                                 //
-#if UNITY_5_6_OR_NEWER
+                                #if UNITY_5_6_OR_NEWER
                                 GL.Begin(GL.LINE_STRIP);
-#else
+                                #else
                                 GL.Begin(GL.LINES);
-#endif
+                                #endif
                                 GL.Color(boundingBoxLineColor);
 
                                 var leftTopPos = new Vector3(tx - boundingBoxWidth * 0.5f, ty + boundingBoxHeight * 0.5f, 0.0f);
@@ -304,11 +296,11 @@ namespace DragonBones
                         case BoundingBoxType.Polygon:
                             {
                                 var vertices = (boundingBoxData as PolygonBoundingBoxData).vertices;
-#if UNITY_5_6_OR_NEWER
+                                #if UNITY_5_6_OR_NEWER
                                 GL.Begin(GL.LINE_STRIP);
-#else
+                                #else
                                 GL.Begin(GL.LINES);
-#endif
+                                #endif
                                 GL.Color(boundingBoxLineColor);
                                 for (var j = 0; j < vertices.Count; j += 2)
                                 {
@@ -657,8 +649,9 @@ namespace DragonBones
 #if UNITY_EDITOR
         private bool _IsPrefab()
         {
-            return PrefabUtility.GetPrefabParent(gameObject) == null
-                && PrefabUtility.GetPrefabObject(gameObject) != null;
+            var prefabType = UnityEditor.PrefabUtility.GetPrefabAssetType(gameObject);
+            var prefabStatus = UnityEditor.PrefabUtility.GetPrefabInstanceStatus(gameObject);
+            return prefabType != UnityEditor.PrefabAssetType.NotAPrefab && prefabStatus == UnityEditor.PrefabInstanceStatus.NotAPrefab;
         }
 #endif
 
@@ -700,8 +693,8 @@ namespace DragonBones
                     _armature.animation.Play(animationName, _playTimes);
                 }
             }
-
-
+            
+            
         }
 
         void Start()
@@ -761,7 +754,7 @@ namespace DragonBones
 
         private void OpenCombineMeshs()
         {
-            if (this.isUGUI)
+            if(this.isUGUI)
             {
                 return;
             }
@@ -773,7 +766,7 @@ namespace DragonBones
                 cm = gameObject.AddComponent<UnityCombineMeshs>();
             }
             //
-
+            
             if (this._armature == null)
             {
                 return;
@@ -797,7 +790,7 @@ namespace DragonBones
             {
                 DestroyImmediate(cm);
             }
-
+            
             if (this._armature == null)
             {
                 return;
